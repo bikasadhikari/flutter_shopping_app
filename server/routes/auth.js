@@ -3,6 +3,8 @@ const User = require('../models/user');
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Env = require('../config');
+const { JWT_KEY } = require('../config');
+const authMiddleWare = require('../middleware/auth');
 const authRouter = express.Router();
 
 authRouter.post('/signup', async (req, res) => {
@@ -25,7 +27,7 @@ authRouter.post('/signup', async (req, res) => {
         res.json(user);
     }
     catch(e) {
-        res.status(500).send({ error: e.message });
+        res.status(500).send({ err: e.message });
     }
 });
 
@@ -44,11 +46,39 @@ authRouter.post('/signin', async (req, res) => {
             return res.status(400).json({ msg: 'Incorrect password!' });
         }
         
-        const token = jwt.sign({ id: user._id }, "passwordKey");
+        const token = jwt.sign({ id: user._id }, JWT_KEY);
         res.json({ token, ...user._doc });
     } catch(e) {
-        res.status(500).json({ error: e.message });
+        res.status(500).json({ err: e.message });
     }
+});
+
+
+authRouter.post('/tokenIsValid', async (req, res) => {
+    try {
+        const token = req.header('x-auth-token');
+        if (!token) {
+            return res.json(false);
+        }
+        const verified = jwt.verify(token, JWT_KEY);
+        if (!verified) {
+            return res.json(false);
+        }
+        const user = await User.findById(verified.id);
+        if (!user) {
+            return res.json(false);
+        }
+
+        res.json(true);
+    } catch(e) {
+        res.status(500).json({ err: e.message });
+    }
+});
+
+
+authRouter.get('/', authMiddleWare, async (req, res) => {
+    const user = await User.findById(req.user);
+    res.json({ ...user._doc, token: req.token });
 });
 
 module.exports = authRouter;
