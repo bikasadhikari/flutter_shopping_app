@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:amazon_clone/common/widgets/bottom_bar.dart';
 import 'package:amazon_clone/constants/backend.dart';
 import 'package:amazon_clone/constants/error_handling.dart';
 import 'package:amazon_clone/constants/utils.dart';
@@ -84,7 +85,7 @@ class AuthService {
           );
           Navigator.pushNamedAndRemoveUntil(
             context,
-            HomeScreen.routeName,
+            BottomBar.routeName,
             (route) => false,
           );
         },
@@ -123,7 +124,7 @@ class AuthService {
 
         // ignore: use_build_context_synchronously
         var userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.setUser(userResponse.body);
+        userProvider.setUser((userResponse.body));
       }
     } catch (e) {
       showSnackBar(context, e.toString());
